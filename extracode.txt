@@ -1,0 +1,221 @@
+ // original signup code 
+import React, { useRef } from 'react'
+import { Link } from 'react-router-dom'
+import axiosClient from '../axios-client';
+import { useStateContext } from '../contexts/ContextProvider';
+
+export default function Signup() {
+  const nameRef=useRef();
+  const emailRef=useRef();
+  const passwordRef=useRef();
+  const passwordConfirmationRef=useRef();
+  
+ const {setUser,setToken} =useStateContext()
+
+
+  const onSubmit=(ev)=>{
+    debugger;
+    ev.preventDefault()
+    const payload={
+   name:nameRef.current.value,
+   email:emailRef.current.value,
+   password:passwordRef.current.value,
+   password_confirmation:passwordConfirmationRef.current.value,
+    }
+    console.log(payload);
+    axiosClient.post('/signup',payload)
+    .then((data)=>{
+      setUser(data.user)
+      setToken(data.token)
+    })
+    .catch(err =>{
+      console.log(err);
+      const response =err.response;
+      if(response && response.status === 422 ){
+console.log(response.data.errors);     
+      }
+    })
+  }
+  return (
+    <div className="login-signup-form animated fadeInDown">
+    <div className="form">
+      <form onSubmit={onSubmit}>
+        <h1 className="title">
+          Signup for free
+        </h1>
+        <input ref={nameRef} type="text" placeholder="Full Name"/>
+        <input  ref={emailRef}type="email" placeholder="Email Address"/>
+        <input ref={passwordRef}type="password" placeholder="Password"/>
+        <input ref={passwordConfirmationRef}type="password" placeholder="Password Confirmation"/>
+
+        <button className="btn btn-block">Signup</button>
+        <p className="message">
+         Already Registered? <Link to="/login">Sign in</Link>
+        </p>
+      </form>
+    </div>
+
+  </div>
+  )
+}
+
+
+
+
+//generated code 
+
+import React, { useRef } from 'react';
+import { Link } from 'react-router-dom';
+import axiosClient from '../axios-client';
+import { useStateContext } from '../contexts/ContextProvider';
+import { validateEmail, validatePassword } from '../helpers/validation'; // client-side validation helpers
+
+export default function Signup() {
+  const nameRef=useRef();
+  const emailRef=useRef();
+  const passwordRef=useRef();
+  const passwordConfirmationRef=useRef();
+  
+  const {setUser,setToken} =useStateContext();
+
+  const onSubmit = async (ev) => {
+    ev.preventDefault();
+
+    // client-side validation
+    if (!nameRef.current.value || !emailRef.current.value || !passwordRef.current.value || !passwordConfirmationRef.current.value) {
+      return alert('Please fill in all the fields.');
+    }
+
+    if (!validateEmail(emailRef.current.value)) {
+      return alert('Invalid email address.');
+    }
+    
+    if (!validatePassword(passwordRef.current.value)) {
+      return alert('Password must be at least 8 characters and contain at least one uppercase, one lowercase, and one number.');
+    }
+
+    if (passwordRef.current.value !== passwordConfirmationRef.current.value) {
+      return alert('Passwords do not match.');
+    }
+
+    const payload = {
+      name: nameRef.current.value,
+      email: emailRef.current.value,
+      password: passwordRef.current.value
+    };
+    
+    try {
+      const { data } = await axiosClient.post('/signup',payload); // wrap async code inside a try-catch block
+
+      setUser(data.user);
+      setToken(data.token);
+    } catch (err) {
+      console.error(err);
+      const { response } = err;
+      if (response && response.status === 422) {
+        console.error(response.data.errors);
+      }
+    }
+  };
+
+  return (
+    <div className="login-signup-form animated fadeInDown">
+      <div className="form">
+        <form onSubmit={onSubmit}>
+          <h1 className="title">Signup for free</h1>
+          <input ref={nameRef} type="text" placeholder="Full Name"/>
+          <input ref={emailRef} type="email" placeholder="Email Address"/>
+          <input ref={passwordRef} type="password" placeholder="Password"/>
+          <input ref={passwordConfirmationRef} type="password" placeholder="Password Confirmation"/>
+          <button className="btn btn-block">Signup</button>
+          <p className="message">Already Registered? <Link to="/login">Sign in</Link></p>
+        </form>
+      </div>
+    </div>
+  );
+}
+  
+
+original api.php
+Route::middleware('auth:sanctum') ->group(function(){
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+    Route::post('/logout',[AuthController::class,'logout']);
+});
+
+
+Route::post('/signup',[AuthController::class,'signup']);
+Route::post('/login',[AuthController::class,'login']);
+
+generated
+Route::middleware(['auth:sanctum'])->group(function() {
+    Route::get('/user', function (Request $request) {
+        return ['user' => $request->user()];
+    });
+    Route::post('/logout', [AuthController::class, 'logout']);
+});
+
+Route::middleware(['throttle:20,1'])->group(function () {
+    Route::post('/signup', [AuthController::class, 'signup']);
+    Route::post('/login', [AuthController::class, 'login']);
+});
+
+
+
+
+axiosClient  original
+
+import axios from "axios";
+
+const axiosClient= axios.create({
+    baseURL:`${import.meta.env.VITE_API_BASE_URL}/api`
+})
+
+axiosClient.interceptors.request.use((config)=>{
+   const token=localStorage.getItem('ACCESS_TOKEN')
+    config.headers.Authorization=`Bearer${token}`
+    return config;
+})
+axiosClient.interceptors.response.use((response)=>{
+return response;
+}, (error)=>{
+  const {response}=error;
+  if(response.status === 401){
+// localStorage.removeItem('ACCESS_TOKEN')
+  } 
+  throw error;
+})
+
+export default axiosClient;
+
+ coppied one
+
+ import axios from "axios";
+import {useStateContext} from "./context/ContextProvider.jsx";
+
+const axiosClient = axios.create({
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`
+})
+
+axiosClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('ACCESS_TOKEN');
+  config.headers.Authorization = `Bearer ${token}`
+  return config;
+})
+
+axiosClient.interceptors.response.use((response) => {
+  return response
+}, (error) => {
+  const {response} = error;
+  if (response.status === 401) {
+    localStorage.removeItem('ACCESS_TOKEN')
+    // window.location.reload();
+  } else if (response.status === 404) {
+    //Show not found
+  }
+
+  throw error;
+})
+
+export default axiosClient
